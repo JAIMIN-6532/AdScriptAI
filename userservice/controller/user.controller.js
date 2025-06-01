@@ -2,6 +2,8 @@ import UserRepository from "../repository/user.repository.js";
 import { sendToken } from "../utils/sendToken.js";
 import { ErrorHandler } from "../utils/ErrorHandler.js";
 import sendWelcomeEmail from "../utils/email/sendWelcomeEmail.js";
+import  publishTokenInitially  from "../kafka/producer.js";
+import {v4 as uuidv4} from "uuid";
 
 export default class UserController {
   constructor() {
@@ -19,11 +21,14 @@ export default class UserController {
       newUser.password = undefined; // Remove password from user object
 
       // Implement sendWelcomeEmail function to send welcome message
-      await sendWelcomeEmail(newUser);
+      // await sendWelcomeEmail(newUser);/////////////////////////////
+      const requestId = uuidv4(); // Generate a unique request ID
+      //publish initial tokens
+      await publishTokenInitially({ requestId,userId: newUser._id });
 
       await sendToken(newUser, res, 200);
 
-      return ;
+      return;
     } catch (err) {
       //  handle error for duplicate email
       return next(new ErrorHandler(400, err));

@@ -5,7 +5,7 @@ dotenv.config();
 
 export const getJWTToken = (userID) => {
   // 1. Read the secret key from environment variables.
-  const secretKey = process.env.JWT_Secret;
+  const secretKey = process.env.JWT_SECRET;
 
   // 2. Create a payload with userID.
   const payload = { userID };

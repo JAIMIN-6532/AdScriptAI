@@ -1,5 +1,9 @@
 import AdScriptRepository from "../repository/adscript.repository.js";
-import ErrorHandler from "../middleware/errorHandlerMiddleware.js";
+import ErrorHandler from "../utils/ErrorHandler.js";
+import { publishAdRequest } from "../kafka/producer.js";
+import { v4 as uuidv4 } from "uuid";
+import { generateDummyScript } from "../utils/generateDummyScript.js";
+import waitForTokenResponse from "../kafka/waitForTokenResponse.js";
 
 export default class AdScriptController {
   constructor() {
@@ -12,23 +16,64 @@ export default class AdScriptController {
    */
   async generateScriptHandler(req, res, next) {
     const userId = req.userID; // set by authMiddleware
-    const { campaignName, productInfo, targetAudience, callToAction } =
-      req.body;
+    console.log("Generating ad script for user:", userId);
+    const {
+      adType,
+      platform,
+      productName,
+      productInfo,
+      targetAudience,
+      tone,
+      budget,
+      durationDays,
+    } = req.body;
 
     try {
+      //0. we Have to Check if the user has enough tokens to generate the script
+      const requestId = uuidv4(); // Generate a unique request ID
+      await publishAdRequest({ requestId, userId, adType,source : "script_generation" });
+
+      // -) Wait for the TokenCheckResponse (or timeout)
+      const tokenResponse = await waitForTokenResponse(requestId, 10000); // 10s timeout
+      // Expected shape: { requestId, userId, status, remainingBalance, tokensDeducted, timestamp }
+
+      if (tokenResponse.status !== "ok") {
+        // Insufficient tokens
+        return next(
+          new ErrorHandler(402, "Insufficient tokens. Please purchase more.")
+        );
+      }
+
       // 1. Generate the scriptText and tokensUsed
-      const { scriptText, tokensUsed } =
-        await this.adScriptRepository.generateAdScript({
-          campaignName,
-          productInfo,
-          targetAudience,
-          callToAction,
-        });
+      // const { generatedAd , tokensUsed } =
+      //   await this.adScriptRepository.generateAdScript({
+      //     adType,
+      //     platform,
+      //     productName,
+      //     productInfo,
+      //     targetAudience,
+      //     tone,
+      //     budget,
+      //     durationDays,
+      //   });
+
+      const generatedAd =  generateDummyScript({
+        adType,
+        platform,
+        productName,
+        productInfo,
+        targetAudience,
+        tone,
+        budget,
+        durationDays,
+      });
+
+
 
       // 2. Respond with the generated script and token cost
       return res.status(200).json({
         success: true,
-        data: { scriptText, tokensUsed },
+        data: { generatedAd, tokensUsed:tokenResponse.tokensDeducted },
       });
     } catch (err) {
       return next(

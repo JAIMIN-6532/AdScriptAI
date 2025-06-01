@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(loggerMiddleware);
 
-app.use("/api/v1/users", loggerMiddleware , userRouter);
+app.use("/", loggerMiddleware , userRouter);
 
 // Handle uncaught exceptions
 app.use((req, res, next) => {

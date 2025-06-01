@@ -1,5 +1,5 @@
 import AdScriptModel from "../model/adscript.model.js";
-import axios from "axios";
+// import axios from "axios";
 import { generateDummyScript } from "../utils/generateDummyScript.js";
 import dotenv from "dotenv";
 dotenv.config();

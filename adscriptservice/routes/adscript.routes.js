@@ -1,13 +1,14 @@
 import express from 'express';
 import AdScriptController from '../controller/adscript.controller.js';
-import { isAuthenticated } from '../middleware/authMiddleware.js';
+import { jwtAuth } from '../middleware/jwtAuth.js';
+
 
 const adScriptRouter = express.Router();
 
 const adScriptController = new AdScriptController();
 
 // Generate (dummy) ad script
-adScriptController.post('/generate', (req, res, next) => {
+adScriptRouter.post('/generate', jwtAuth, (req, res, next) => {
     adScriptController.generateScriptHandler(req, res, next);
 });
 
@@ -17,7 +18,7 @@ adScriptRouter.post('/', (req, res, next) => {
 });
 
 // Fetch all scripts for the authenticated user
-adScriptRouter.get('/',(req, res, next) => {
+adScriptRouter.get('/', jwtAuth ,(req, res, next) => {
     adScriptController.getAllScriptsHandler(req, res, next);
 });
 

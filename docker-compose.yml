@@ -1,0 +1,136 @@
+version: '3.8'   # Optional in newer Compose versions; you can omit it if you want
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # Declare both listener names (PLAINTEXT, PLAINTEXT_HOST)
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+
+      # Advertise them so that:
+      # - Containers use kafka:9092
+      # - Host tools use localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      KAFKA_CREATE_TOPICS: "adscript.requests:1:1,adscript.tokens:1:1,user.tokens:1:1"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+    depends_on:
+      - zookeeper
+
+networks:
+  default:
+    driver: bridge
+
+  # mongo-token:
+  #   image: mongo:6.0
+  #   container_name: mongo-token
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - ./data/token:/data/db
+
+  # mongo-adscript:
+  #   image: mongo:6.0
+  #   container_name: mongo-adscript
+  #   ports:
+  #     - "27018:27017"
+  #   volumes:
+  #     - ./data/adscript:/data/db
+
+  # token-service:
+  #   build:
+  #     context: ./tokenService
+  #     dockerfile: Dockerfile
+  #   container_name: token-service
+  #   ports:
+  #     - "3003:3003"
+  #   environment:
+  #     - PORT=3003
+  #     - MONGO_URI=mongodb://mongo-token:27017/token
+  #     - KAFKA_BROKER=kafka:9092
+  #   depends_on:
+  #     - kafka
+  #     - zookeeper
+  #     - mongo-token
+
+  # adscript-service:
+  #   build:
+  #     context: ./adScriptService
+  #     dockerfile: Dockerfile
+  #   container_name: adscript-service
+  #   ports:
+  #     - "3002:3002"
+  #   environment:
+  #     - PORT=3002
+  #     - MONGO_URI=mongodb://mongo-adscript:27017/adscript
+  #     - TOKEN_SERVICE_URL=http://token-service:3003
+  #     - KAFKA_BROKER=kafka:9092
+  #   depends_on:
+  #     - kafka
+  #     - zookeeper
+  #     - mongo-adscript
+  #     - token-service
+
+  # gateway:
+  #   build:
+  #     context: ./gateway
+  #     dockerfile: Dockerfile
+  #   container_name: api-gateway
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - PORT=3000
+  #     - USER_SERVICE_URL=http://user-service:3001        # If you also have a UserService
+  #     - ADSCRIPT_SERVICE_URL=http://adscript-service:3002
+  #     - TOKEN_SERVICE_URL=http://token-service:3003
+  #     - ALLOWED_ORIGINS=http://localhost:4200,https://myfrontend.example.com
+  #   depends_on:
+  #     - adscript-service
+  #     - token-service
+
+  # # (Optional) If you have a separate UserService:
+  # user-service:
+  #   build:
+  #     context: ./userService
+  #     dockerfile: Dockerfile
+  #   container_name: user-service
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - PORT=3001
+  #     - MONGO_URI=mongodb://mongo-user:27017/users
+  #     - KAFKA_BROKER=kafka:9092
+  #   depends_on:
+  #     - kafka
+  #     - zookeeper
+  #     - mongo-user
+
+  # mongo-user:
+  #   image: mongo:6.0
+  #   container_name: mongo-user
+  #   ports:
+  #     - "27019:27017"
+  #   volumes:
+  #     - ./data/user:/data/db
