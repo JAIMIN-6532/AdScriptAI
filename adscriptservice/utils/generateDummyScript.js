@@ -12,10 +12,10 @@ export function generateDummyScript(data) {
 
   const generatedAd = {
     generatedAd: `
-${campaignName.toUpperCase()}
+${data.productName.toUpperCase()}
 =============================
-Looking for ${productInfo}? We've got you covered!
-Our product is perfect for ${targetAudience}. ${callToAction}
+Looking for ${data.productInfo}? We've got you covered!
+Our product is perfect for ${data.targetAudience}. ${data.tone}
       `,
   };
   return generatedAd.generatedAd.trim(); // Return the ad script without extra whitespace

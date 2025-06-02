@@ -1,9 +1,9 @@
 import AdScriptRepository from "../repository/adscript.repository.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
-import { publishAdRequest } from "../kafka/producer.js";
 import { v4 as uuidv4 } from "uuid";
 import { generateDummyScript } from "../utils/generateDummyScript.js";
 import waitForTokenResponse from "../kafka/waitForTokenResponse.js";
+import { publishAdRequest } from "../kafka/producer.js";
 
 export default class AdScriptController {
   constructor() {
@@ -31,10 +31,18 @@ export default class AdScriptController {
     try {
       //0. we Have to Check if the user has enough tokens to generate the script
       const requestId = uuidv4(); // Generate a unique request ID
-      await publishAdRequest({ requestId, userId, adType,source : "script_generation" });
+      await publishAdRequest({
+        requestId,
+        userId,
+        adType,
+        source: "script_generation",
+      });
 
-      // -) Wait for the TokenCheckResponse (or timeout)
-      const tokenResponse = await waitForTokenResponse(requestId, 10000); // 10s timeout
+      // Then wait for a matching reply on 'adscript.tokens'
+      const tokenResponse = await waitForTokenResponse(
+        requestId,
+        /*timeoutMs=*/ 10000
+      );
       // Expected shape: { requestId, userId, status, remainingBalance, tokensDeducted, timestamp }
 
       if (tokenResponse.status !== "ok") {
@@ -57,7 +65,7 @@ export default class AdScriptController {
       //     durationDays,
       //   });
 
-      const generatedAd =  generateDummyScript({
+      const generatedAd = generateDummyScript({
         adType,
         platform,
         productName,
@@ -68,12 +76,10 @@ export default class AdScriptController {
         durationDays,
       });
 
-
-
       // 2. Respond with the generated script and token cost
       return res.status(200).json({
         success: true,
-        data: { generatedAd, tokensUsed:tokenResponse.tokensDeducted },
+        data: { generatedAd, tokensUsed: tokenResponse.tokensDeducted },
       });
     } catch (err) {
       return next(
