@@ -75,7 +75,7 @@ async function startReplyConsumer() {
     // We only care about new replies going forward; fromBeginning: false
     await replyConsumer.subscribe({
       topic: "adscript.tokens",
-      fromBeginning: false,
+      fromBeginning: true,
     });
     console.log("🔔 replyConsumer subscribed to 'adscript.tokens'");
 
@@ -123,7 +123,7 @@ startReplyConsumer();
  * @param {number} [timeoutMs=10000]
  * @returns {Promise<object>}
  */
-export default function waitForTokenResponse(requestId, timeoutMs = 10000) {
+export default function waitForTokenResponse(requestId, timeoutMs = 100000) {
   if (!requestId) {
     return Promise.reject(new Error("waitForTokenResponse requires a non-empty requestId"));
   }

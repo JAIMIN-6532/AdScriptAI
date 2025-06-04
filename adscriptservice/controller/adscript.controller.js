@@ -1,13 +1,14 @@
 import AdScriptRepository from "../repository/adscript.repository.js";
 import ErrorHandler from "../utils/ErrorHandler.js";
 import { v4 as uuidv4 } from "uuid";
-import { generateDummyScript } from "../utils/generateDummyScript.js";
 import waitForTokenResponse from "../kafka/waitForTokenResponse.js";
 import { publishAdRequest } from "../kafka/producer.js";
+import OpenAIController from "./gemini.controller.js";
 
 export default class AdScriptController {
   constructor() {
     this.adScriptRepository = new AdScriptRepository();
+    this.openAIController = new OpenAIController();
   }
   /**
    * POST /api/ad-scripts/generate
@@ -26,6 +27,9 @@ export default class AdScriptController {
       tone,
       budget,
       durationDays,
+      timeToGenerate,
+      // callToAction is optional, so we provide a default if not set
+      callToAction = "Learn More",
     } = req.body;
 
     try {
@@ -41,10 +45,10 @@ export default class AdScriptController {
       // Then wait for a matching reply on 'adscript.tokens'
       const tokenResponse = await waitForTokenResponse(
         requestId,
-        /*timeoutMs=*/ 10000
+        /*timeoutMs=*/ 100000
       );
       // Expected shape: { requestId, userId, status, remainingBalance, tokensDeducted, timestamp }
-
+      console.log(`Token response for request ${requestId}:`, tokenResponse);
       if (tokenResponse.status !== "ok") {
         // Insufficient tokens
         return next(
@@ -52,29 +56,29 @@ export default class AdScriptController {
         );
       }
 
-      // 1. Generate the scriptText and tokensUsed
-      // const { generatedAd , tokensUsed } =
-      //   await this.adScriptRepository.generateAdScript({
-      //     adType,
-      //     platform,
-      //     productName,
-      //     productInfo,
-      //     targetAudience,
-      //     tone,
-      //     budget,
-      //     durationDays,
-      //   });
+      //1. prompt for AI script generation
+      const prompt = `
+      Generate an advertising script with the following details:
+      - Ad Type: ${adType}
+      - Platform: ${platform}
+      - Product Name: ${productName}
+      - Product Info: ${productInfo}
+      - Target Audience: ${targetAudience}
+      - Tone: ${tone}
+      - Budget: $${budget}
+      - Duration: ${durationDays} days
+      - Time to Generate: ${timeToGenerate} seconds
+      - Call to Action: ${callToAction || "Learn More"}
 
-      const generatedAd = generateDummyScript({
-        adType,
-        platform,
-        productName,
-        productInfo,
-        targetAudience,
-        tone,
-        budget,
-        durationDays,
-      });
+      Provide a creative and engaging script.
+      Give script in human redable point vise formate structure.
+    `;
+
+      // 2. Generate the ad script using OpenAI
+      const generatedAd = await this.openAIController.generateChatResponse(
+        prompt,
+        1500 // Max tokens for the response
+      );
 
       // 2. Respond with the generated script and token cost
       return res.status(200).json({
@@ -96,27 +100,41 @@ export default class AdScriptController {
   async saveScriptHandler(req, res, next) {
     const userId = req.userID;
     const {
-      campaignName,
+      adType,
+      platform,
+      productName,
       productInfo,
       targetAudience,
-      callToAction,
-      scriptText,
+      tone,
+      budget,
+      durationDays,
+      timeToGenerate,
+      callToAction = "Learn More",
+      generatedScript,
       tokensUsed,
     } = req.body;
 
     try {
       const saved = await this.adScriptRepository.saveAdScript({
         userId,
-        campaignName,
+        adType,
+        platform,
+        productName,
         productInfo,
         targetAudience,
+        tone,
+        budget,
+        durationDays,
+        timeToGenerate,
         callToAction,
-        scriptText,
+        generatedScript,
         tokensUsed,
       });
       return res.status(201).json({ success: true, data: saved });
     } catch (err) {
+      console.error("Error saving script:", err);
       return next(
+        
         new ErrorHandler(500, err.message || "Failed to save script")
       );
     }
@@ -143,7 +161,7 @@ export default class AdScriptController {
    * GET /api/ad-scripts/:id
    * Returns a single script by ID if it belongs to the user.
    */
-  async getSingleScriptHandler(req, res, next) {
+  async getScriptByIdHandler(req, res, next) {
     const userId = req.userID;
     const adScriptId = req.params.id;
 

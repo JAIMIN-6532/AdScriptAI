@@ -13,7 +13,7 @@ adScriptRouter.post('/generate', jwtAuth, (req, res, next) => {
 });
 
 // Save a generated ad script
-adScriptRouter.post('/', (req, res, next) => {
+adScriptRouter.post('/', jwtAuth ,(req, res, next) => {
     adScriptController.saveScriptHandler(req, res, next);
 });
 
@@ -23,17 +23,17 @@ adScriptRouter.get('/', jwtAuth ,(req, res, next) => {
 });
 
 // Fetch one script by ID
-adScriptRouter.get('/:id', (req, res, next) => {
+adScriptRouter.get('/:id', jwtAuth ,(req, res, next) => {
     adScriptController.getScriptByIdHandler(req, res, next);
 });
 
 // Update a script
-adScriptRouter.put('/:id', (req, res, next) => {
+adScriptRouter.put('/:id', jwtAuth ,(req, res, next) => {
     adScriptController.updateScriptHandler(req, res, next);
 });
 
 // Delete a script
-adScriptRouter.delete('/:id', (req, res, next) => {
+adScriptRouter.delete('/:id', jwtAuth ,(req, res, next) => {
     adScriptController.deleteScriptHandler(req, res, next);
 });
 

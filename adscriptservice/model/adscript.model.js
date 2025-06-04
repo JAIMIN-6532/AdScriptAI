@@ -9,7 +9,7 @@ const adScriptSchema = new mongoose.Schema(
     },
     adType: {
       type: String,
-      enum: ["video", "image", "text"],
+      enum: ["video", "image", "script"],
       required: [true, "Ad type is required"],
     },
     platform: {
@@ -60,6 +60,11 @@ const adScriptSchema = new mongoose.Schema(
       type: String,
       // required: [true, "Generated script is required"],
       trim: true,
+    },
+    timeToGenerate: {
+      type: Number,
+      // required: [true, "Time to generate is required"],
+      min: [0, "Time to generate must be at least 0 milliseconds"],
     },
     tokensUsed: {
       type: Number,
