@@ -18,7 +18,7 @@ const ADSCRIPT_SERVICE_URL =
 const TOKEN_SERVICE_URL =
   process.env.TOKEN_SERVICE_URL || "http://localhost:3003";
 
-// ─── 2) GLOBAL MIDDLEWARE ──────────────────────────────────────────────────────
+// ─── 2) GLOBAL MIDDLEWARE ─────────────────────────────────────────
 // Security headers
 app.use(helmet());
 

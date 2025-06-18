@@ -1,30 +1,29 @@
 import TokenModel from "../model/token.model.js";
 
 export default class TokenRepository {
+  async addInitialTokens(userId, requestId) {
+    const createTokenEntry = await TokenModel.create({
+      userId: userId,
+      remainingBalance: 50, // Initial tokens
+      transaction: [
+        {
+          type: "initial",
+          amount: 50,
+          source: "system", // Initial tokens added from purchase
+        },
+      ],
+    });
+    return {
+      requestId,
+      userId,
+      status: "ok",
+      remainingBalance: createTokenEntry.remainingBalance,
+      tokensAdded: 50,
+      timestamp: new Date().toISOString(),
+    };
+  }
 
-    async addInitialTokens(userId, requestId) {
-        const createTokenEntry = await TokenModel.create({
-            userId: userId,
-            remainingBalance: 50, // Initial tokens
-            transaction: [
-                {
-                    type: "initial",
-                    amount: 50,
-                    source: "system", // Initial tokens added from purchase
-                },
-            ],
-        });
-        return {
-            requestId,
-            userId,
-            status: "ok",
-            remainingBalance: createTokenEntry.remainingBalance,
-            tokensAdded: 50,
-            timestamp: new Date().toISOString(),
-        };
-    }
-
-  async checkAndDeductTokens(userId, adType, requestId , source) {
+  async checkAndDeductTokens(userId, adType, requestId, source) {
     // 1) Fetch current balance:
     const lastTx = await TokenModel.findOne({ userId });
     const currentBalance = lastTx ? lastTx.remainingBalance : 0;
@@ -65,7 +64,6 @@ export default class TokenRepository {
         { new: true, upsert: true } // Create if not exists
       ).exec();
 
-
       responsePayload = {
         requestId,
         userId,
@@ -87,4 +85,62 @@ export default class TokenRepository {
     }
     return responsePayload;
   }
+
+  /**
+   * Check if a paymentId has already been processed for idempotency
+   */
+  async isProcessed(paymentId) {
+    const existingTx = await TokenModel.findOne({
+      "transaction.sourceId": paymentId,
+    }).exec();
+    return !!existingTx;
+  }
+
+  /**
+   * Credit tokens to a user and record the transaction
+   */
+  async creditTokens(userId, tokensToCredit, metadata = {}) {
+    const { requestId, paymentId, orderId } = metadata;
+    // Update the user's token document
+    const updated = await TokenModel.findOneAndUpdate(
+      { userId },
+      {
+        $inc: { remainingBalance: tokensToCredit },
+        $push: {
+          transaction: {
+            type: "addition",
+            amount: tokensToCredit,
+            source: "purchase",
+            sourceId: paymentId,
+            orderId: orderId,
+            requestId: requestId,
+          },
+        },
+      },
+      { new: true, upsert: true }
+    ).exec();
+
+    return {
+      requestId,
+      userId,
+      status: "ok",
+      remainingBalance: updated.remainingBalance,
+      tokensAdded: tokensToCredit,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  async getUserTokens(userId) {
+    const userTokens = await TokenModel.findOne({ userId }).exec();
+    if (!userTokens) {
+      throw new Error("User tokens not found");
+    }
+    return {
+      userId,
+      remainingBalance: userTokens.remainingBalance,
+      transaction: userTokens.transaction,
+    };
+  }
+
+
 }

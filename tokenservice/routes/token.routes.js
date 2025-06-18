@@ -6,11 +6,10 @@ const tokenRouter = express.Router();
 
 const tokenController = new TokenController();
 
-// Generate a new token
-tokenRouter.post('/generate', jwtAuth, (req, res, next) => {
-    tokenController.generateTokenHandler(req, res, next);
+// Get User TokensDetails
+tokenRouter.get('/tokens', jwtAuth, (req, res, next) => {
+  tokenController.getUserTokens(req, res, next);
 });
-
 
 
 export default tokenRouter;

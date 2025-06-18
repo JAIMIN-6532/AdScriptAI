@@ -1,27 +1,3 @@
-
-// import kafka from "../config/kafkaClient.js";
-
-// const producer = kafka.producer();
-// export async function publishTokenInitially(event) {
-//   try {
-//     console.log(
-//       "Publishing tokens inititally to Kafka topic: user.tokens",
-//       event
-//     );
-//     await producer.connect();
-//     console.log("Connected to Kafka producer");
-//     await producer.send({
-//       topic: "user.tokens",
-//       messages: [{ key: event.requestId, value: JSON.stringify(event) }],
-//     });
-//     console.log("initial tokens published successfully:", event);
-//     await producer.disconnect();
-//     console.log("Disconnected from Kafka producer");
-//   } catch (error) {
-//     console.error("Error publishing initial tokens to Kafka:", error);
-//     throw error;
-//   }
-// }
 import kafka from "../config/kafkaClient.js";
 
 const producer = kafka.producer();

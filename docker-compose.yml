@@ -39,9 +39,64 @@ services:
     depends_on:
       - zookeeper
 
+    # all services...........
+  user-service:
+    build:
+      context : ./userservice
+    container_name: user-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./userservice/.env
+
+  adscript-service:
+    build:
+      context : ./adscriptservice
+    container_name: adscript-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./adscriptservice/.env
+  
+  token-service:
+    build:
+      context : ./tokenservice
+    container_name: token-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./tokenservice/.env
+
+  payment-service:
+    build:
+      context : ./paymentservice
+    container_name: payment-service
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./paymentservice/.env
+
+  api-gateway:
+    build:
+      context : ./apigatwayservice
+    container_name: api-gateway-service
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apigatwayservice/.env
+    depends_on:
+      - user-service
+      - adscript-service
+      - token-service
+      - payment-service
+
 networks:
   default:
     driver: bridge
+
+
+
+
 
   # mongo-token:
   #   image: mongo:6.0

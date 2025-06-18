@@ -11,7 +11,7 @@ const tokenSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ["deduction", "addition","initial"], // "initial" for system-generated tokens, "deduction" for script generation, "addition" for purchases
+          enum: ["deduction", "addition", "initial"], // "initial" for system-generated tokens, "deduction" for script generation, "addition" for purchases
           // required: true,
         },
         amount: {
@@ -21,16 +21,22 @@ const tokenSchema = new mongoose.Schema(
         },
         source: {
           type: String,
-          enum: ["script_generation", "purchase","system"], // "system" for initial tokens, "purchase" for user purchases
+          enum: ["script_generation", "purchase", "system"], // "system" for initial tokens, "purchase" for user purchases
           // required: true,
         },
-
+        sourceId: {
+          type: String, // e.g. paymentId
+        },
+        orderId: {
+          type: String,
+        },
+        requestId: {
+          type: String,
+        },
       },
-
     ],
     remainingBalance: {
       type: Number,
-      
       min: 0,
     },
     //   // Optional metadata
