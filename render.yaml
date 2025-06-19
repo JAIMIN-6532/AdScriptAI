@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: api-gateway
+    env: docker
+    plan: free
+    dockerfilePath: ./apigatwayservice/Dockerfile
+    envVars:
+      - key: PORT
+        value: "3000"
+  - type: web
+    name: user-service
+    env: docker
+    plan: free
+    dockerfilePath: ./userservice/Dockerfile
+    envVars:
+      - key: PORT
+        value: "3001"
+  - type: web
+    name: adscript-service
+    env: docker
+    plan: free
+    dockerfilePath: ./adscriptservice/Dockerfile
+    envVars:
+      - key: PORT
+        value: "3002"
+  - type: web
+    name: token-service
+    env: docker
+    plan: free
+    dockerfilePath: ./tokenservice/Dockerfile
+    envVars:
+      - key: PORT
+        value: "3003"
+  - type: web
+    name: payment-service
+    env: docker
+    plan: free
+    dockerfilePath: ./paymentservice/Dockerfile
+    envVars:
+      - key: PORT
+        value: "3004"

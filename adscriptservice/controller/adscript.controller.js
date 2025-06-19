@@ -3,12 +3,14 @@ import ErrorHandler from "../utils/ErrorHandler.js";
 import { v4 as uuidv4 } from "uuid";
 import waitForTokenResponse from "../kafka/waitForTokenResponse.js";
 import { publishAdRequest } from "../kafka/producer.js";
-import OpenAIController from "./gemini.controller.js";
+import GeminiAIController from "./gemini.controller.js";
+import ClipDropController from "./clipdrop.controller.js";
 
 export default class AdScriptController {
   constructor() {
     this.adScriptRepository = new AdScriptRepository();
-    this.openAIController = new OpenAIController();
+    this.geminiAIController = new GeminiAIController();
+    this.clipDropController = new ClipDropController();
   }
   /**
    * POST /api/ad-scripts/generate
@@ -57,6 +59,7 @@ export default class AdScriptController {
       }
 
       //1. prompt for AI script generation
+
       const prompt = `
       Generate an advertising script with the following details:
       - Ad Type: ${adType}
@@ -75,7 +78,7 @@ export default class AdScriptController {
     `;
 
       // 2. Generate the ad script using OpenAI
-      const generatedAd = await this.openAIController.generateChatResponse(
+      const generatedAd = await this.geminiAIController.generateChatResponse(
         prompt,
         1500 // Max tokens for the response
       );
@@ -84,6 +87,75 @@ export default class AdScriptController {
       return res.status(200).json({
         success: true,
         data: { generatedAd, tokensUsed: tokenResponse.tokensDeducted },
+      });
+    } catch (err) {
+      return next(
+        new ErrorHandler(500, err.message || "Failed to generate script")
+      );
+    }
+  }
+
+  async generateImageHandler(req, res, next) {
+    const userId = req.userID; // set by authMiddleware
+    console.log("Generating ad script for user:", userId);
+    const {
+      adType = "image",
+      platform,
+      productName,
+      productInfo,
+      targetAudience,
+      callToAction = "Learn More",
+    } = req.body;
+
+    try {
+      //0. we Have to Check if the user has enough tokens to generate the script
+      const requestId = uuidv4(); // Generate a unique request ID
+      await publishAdRequest({
+        requestId,
+        userId,
+        adType,
+        source: "image_generation",
+      });
+
+      // Then wait for a matching reply on 'adscript.tokens'
+      const tokenResponse = await waitForTokenResponse(
+        requestId,
+        /*timeoutMs=*/ 100000
+      );
+      // Expected shape: { requestId, userId, status, remainingBalance, tokensDeducted, timestamp }
+      console.log(`Token response for request ${requestId}:`, tokenResponse);
+      if (tokenResponse.status !== "ok") {
+        // Insufficient tokens
+        return next(
+          new ErrorHandler(402, "Insufficient tokens. Please purchase more.")
+        );
+      }
+
+      //1. prompt for AI script generation
+
+      const prompt = `
+      Create a high-quality, visually engaging advertisement image for the following product:
+
+  - Product Name: ${productName}
+  - Product Description: ${productInfo}
+  - Target Audience: ${targetAudience}
+  - Platform: ${platform}
+  - Call to Action: ${callToAction || "See More"}
+
+  Guidelines:
+  - Use visual language suitable for ${platform} advertising.
+  - Make it appealing to ${targetAudience}.
+  - The ad should focus on ${productName}’s core value: ${productInfo}.
+  - Include imagery that supports the call to action: "${callToAction}".
+    `;
+
+      // 2. Generate the ad script using OpenAI
+      const generatedAdImage = await this.clipDropController.generateImage(prompt);
+
+      // 2. Respond with the generated script and token cost
+      return res.status(200).json({
+        success: true,
+        data: { generatedAdImage, tokensUsed: tokenResponse.tokensDeducted },
       });
     } catch (err) {
       return next(
@@ -134,7 +206,6 @@ export default class AdScriptController {
     } catch (err) {
       console.error("Error saving script:", err);
       return next(
-        
         new ErrorHandler(500, err.message || "Failed to save script")
       );
     }

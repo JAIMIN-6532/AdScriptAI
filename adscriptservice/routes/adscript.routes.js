@@ -12,10 +12,17 @@ adScriptRouter.post('/generate', jwtAuth, (req, res, next) => {
     adScriptController.generateScriptHandler(req, res, next);
 });
 
+//Generate Ad Image 
+adScriptRouter.post('/generate-image', jwtAuth, (req, res, next) => {
+    adScriptController.generateImageHandler(req, res, next);
+});
+
 // Save a generated ad script
 adScriptRouter.post('/', jwtAuth ,(req, res, next) => {
     adScriptController.saveScriptHandler(req, res, next);
 });
+
+
 
 // Fetch all scripts for the authenticated user
 adScriptRouter.get('/', jwtAuth ,(req, res, next) => {

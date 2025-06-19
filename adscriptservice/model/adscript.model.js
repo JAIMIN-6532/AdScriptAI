@@ -38,16 +38,16 @@ const adScriptSchema = new mongoose.Schema(
     tone: {
       type: String,
       enum: ["casual", "professional", "friendly", "urgent"],
-      required: [true, "Tone is required"],
+      // required: [true, "Tone is required"],
     },
     budget: {
       type: Number,
-      required: [true, "Budget is required"],
+      // required: [true, "Budget is required"],
       min: [0, "Budget must be at least 0"],
     },
     durationDays: {
       type: Number,
-      required: [true, "Duration is required"],
+      // required: [true, "Duration is required"],
       min: [7, "Duration must be at least 1 second"],
     },
     callToAction: {

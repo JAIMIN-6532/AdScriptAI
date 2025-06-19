@@ -21,7 +21,7 @@ const tokenSchema = new mongoose.Schema(
         },
         source: {
           type: String,
-          enum: ["script_generation", "purchase", "system"], // "system" for initial tokens, "purchase" for user purchases
+          enum: ["script_generation", "purchase", "system","image_generation"], // "system" for initial tokens, "purchase" for user purchases
           // required: true,
         },
         sourceId: {
