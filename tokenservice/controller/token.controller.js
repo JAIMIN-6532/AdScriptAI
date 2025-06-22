@@ -18,4 +18,17 @@ export default class TokenController {
       next(new ErrorHandler(500, error.message || "Internal server error"));
     }
   };
+
+  getAllUsersTokens = async (req, res, next) => {
+    try {
+      const tokensDetails = await this.tokenRepository.getAllUsersTokens();
+      res.status(200).json({
+        success: true,
+        message: "All users' tokens retrieved successfully",
+        tokensDetails: tokensDetails,
+      });
+    } catch (error) {
+      next(new ErrorHandler(500, error.message || "Internal server error"));
+    }
+  };
 }

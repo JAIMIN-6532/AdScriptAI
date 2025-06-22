@@ -33,6 +33,10 @@ const tokenSchema = new mongoose.Schema(
         requestId: {
           type: String,
         },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     remainingBalance: {

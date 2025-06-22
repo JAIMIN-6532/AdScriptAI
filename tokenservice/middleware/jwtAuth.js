@@ -18,6 +18,7 @@ export const jwtAuth = (req, res, next) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     req.userID = payload.userID;
+    req.user = payload;
     console.log("Decoded payload:", payload.userID);
   } catch (err) {
     // 4. return error.
@@ -29,9 +30,8 @@ export const jwtAuth = (req, res, next) => {
 };
 
 export const authByUserRole = (...roles) => {
-  // fix this middleware for admin access only
   return async (req, res, next) => {
-    if (roles.includes(req.user.role !== "admin")) {
+    if (!roles.includes(req.user.role)) {
       return next(
         new ErrorHandler(
           403,

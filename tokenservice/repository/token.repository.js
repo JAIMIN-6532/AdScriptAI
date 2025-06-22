@@ -34,13 +34,13 @@ export default class TokenRepository {
     let tokensNeeded;
     switch (adType) {
       case "image":
-        tokensNeeded = 10; // Dummy script generation
+        tokensNeeded = 10;
         break;
       case "script":
-        tokensNeeded = 20; // AI script generation
+        tokensNeeded = 20;
         break;
       case "video":
-        tokensNeeded = 30; // Premium script generation
+        tokensNeeded = 30;
         break;
       default:
         throw new Error("Invalid adType provided");
@@ -131,16 +131,20 @@ export default class TokenRepository {
   }
 
   async getUserTokens(userId) {
-    const userTokens = await TokenModel.findOne({ userId }).exec();
-    if (!userTokens) {
-      throw new Error("User tokens not found");
+    try {
+      const userTokens = await TokenModel.findOne({ userId }).exec();
+      return userTokens;
+    } catch (error) {
+      throw new Error("Error retrieving user tokens: " + error.message);
     }
-    return {
-      userId,
-      remainingBalance: userTokens.remainingBalance,
-      transaction: userTokens.transaction,
-    };
   }
 
-
+  async getAllUsersTokens() {
+    try {
+      const allTokens = await TokenModel.find().exec();
+      return allTokens;
+    } catch (error) {
+      throw new Error("Error retrieving all users' tokens: " + error.message);
+    }
+  }
 }

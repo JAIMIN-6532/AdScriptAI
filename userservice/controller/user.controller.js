@@ -30,7 +30,6 @@ export default class UserController {
 
       return;
     } catch (err) {
-      //  handle error for duplicate email
       return next(new ErrorHandler(400, err));
     }
   }
@@ -87,5 +86,26 @@ export default class UserController {
         new ErrorHandler(500, err.message || "Internal server error")
       );
     }
+  }
+
+  async getAllUsers(req, res, next) {
+    try{
+      // const userId = req.userID;
+      // // If user is not admin, restrict access
+      // if (!userId || !req.isAdmin) {
+      //   return next(new ErrorHandler(403, "Access denied"));
+      // }
+
+      const users = await this.userRepository.getAllUsers();
+      if (!users || users.length === 0) {
+        return next(new ErrorHandler(404, "No users found"));
+      }
+      res.status(200).json({ success: true, users });
+    }catch (err) {
+      return next(
+        new ErrorHandler(500, err.message || "Internal server error")
+      );
+    }
+  
   }
 }

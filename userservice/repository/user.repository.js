@@ -31,4 +31,13 @@ export default class UserRepository {
       throw error;
     }
   }
+
+  async getAllUsers() {
+    try {
+      const users = await UserModel.find().select("-password");
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

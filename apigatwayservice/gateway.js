@@ -5,10 +5,12 @@ const helmet = require("helmet");
 const cors = require("cors");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
+const expressWinston = require("express-winston");
+const logger = require("./src/utils/logger.js");
 
 const app = express();
 
-// ─── 1) ENVIRONMENT AND SERVICE URLS ──────────────────────────────────────────
+//1) ENVIRONMENT AND SERVICE URLS
 const PORT = process.env.PORT || 3000;
 
 const USER_SERVICE_URL =
@@ -18,7 +20,7 @@ const ADSCRIPT_SERVICE_URL =
 const TOKEN_SERVICE_URL =
   process.env.TOKEN_SERVICE_URL || "http://localhost:3003";
 
-// ─── 2) GLOBAL MIDDLEWARE ─────────────────────────────────────────
+// 2) GLOBAL MIDDLEWARE
 // Security headers
 app.use(helmet());
 
@@ -47,7 +49,7 @@ const apiLimiter = rateLimit({
 });
 app.use("/api/v1/", apiLimiter);
 
-// ─── 3) HEALTH-CHECK ENDPOINTS ────────────────────────────────────────────────
+// 3) HEALTH-CHECK ENDPOINTS
 // Liveness probe
 app.get("/healthz/live", (req, res) => {
   res.sendStatus(200);
@@ -68,9 +70,16 @@ app.get("/healthz/ready", async (req, res) => {
   }
 });
 
+app.use(
+  expressWinston.logger({
+    winstonInstance: logger,
+    meta: true,
+    msg: "{{req.method}} {{req.url}} {{req.body}}→ status {{res.statusCode}} {{res.responseTime}}ms",
+    colorize: false,
+  })
+);
 
-
-// ─── 4) PROXY HELPERS ───────────────────────────────────────────────────────────
+//4) PROXY HELPERS
 /**
  * Wraps a createProxyMiddleware instance in a circuit-breaker-like pattern.
  * If the downstream service is returning >=500 or timing out, it quickly fails with a 503.
@@ -83,10 +92,14 @@ function makeProxy(pathPrefix, targetUrl) {
     timeout: 30_000, // how long the gateway waits for the downstream response means 30 seconds
     proxyTimeout: 30_000,
     onError(err, req, res) {
-      console.error(
-        `❌ Proxy error: ${req.method} ${req.originalUrl} → ${targetUrl}`,
+      logger.error(
+        ` Proxy error: ${req.method} ${req.originalUrl} → ${targetUrl}`,
         err.message
       );
+      // console.error(
+      //   ` Proxy error: ${req.method} ${req.originalUrl} → ${targetUrl}`,
+      //   err.message
+      // );
       if (!res.headersSent) {
         res.status(502).json({ error: "Upstream service unavailable." });
       }
@@ -94,7 +107,7 @@ function makeProxy(pathPrefix, targetUrl) {
   });
 }
 
-// ─── 5) MOUNT GATEWAY ROUTES ────────────────────────────────────────────────────
+//5) MOUNT GATEWAY ROUTES
 
 // 5a) All "/api/v1/users/*" → userService (prefix stripped)
 app.use("/api/v1/users", makeProxy("/api/v1/users", USER_SERVICE_URL));
@@ -108,20 +121,25 @@ app.use(
 // 5c) All "/api/v1/token/*" → tokenService
 app.use("/api/v1/token", makeProxy("/api/v1/token", TOKEN_SERVICE_URL));
 
-// ─── 6) CATCH-ALL 404 FOR UNKNOWN ROUTES ───────────────────────────────────────
+// 6) CATCH-ALL 404 FOR UNKNOWN ROUTES 
 app.use((req, res) => {
+  logger.warn(`Unknown route: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: "Not found" });
 });
 
-// ─── 7) GLOBAL ERROR HANDLER (in case anything else throws) ────────────────────
+//  7) GLOBAL ERROR HANDLER (in case anything else throws) 
 app.use((err, req, res, next) => {
-  console.error("❌ Unhandled Gateway Error:", err);
+  logger.error(
+    `Unhandled error: ${req.method} ${req.originalUrl} → ${err.message} -> ${err.stack} `,
+    err
+  );
+  // console.error(" Unhandled Gateway Error:", err);
   if (!res.headersSent) {
     res.status(500).json({ error: "Gateway internal error" });
   }
 });
 
-// ─── 8) START LISTENING ─────────────────────────────────────────────────────────
+//  8) START LISTENING 
 app.listen(PORT, () => {
-  console.log(`🚀 API Gateway running on http://localhost:${PORT}`);
+  logger.info(`Gateway listening on ${PORT}`);
 });
