@@ -14,7 +14,7 @@ export default class GeminiController {
         model: process.env.GOOGLE_GENAI_MODEL, 
         contents: prompt, // single string or array of strings
         maxOutputTokens: 1000,
-        temperature: 0.7,
+        temperature: 0.7, // for make our script more creative and less deterministic more random
       });
 
       // The returned object has a `.text` field containing the generated output

@@ -1,4 +1,3 @@
-// common example: kafkaClient.js
 import { Kafka } from 'kafkajs';
 import dotenv from 'dotenv';
 dotenv.config();

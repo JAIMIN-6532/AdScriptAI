@@ -49,7 +49,6 @@ export async function startPaymentTokensConsumer() {
 
         } catch (error) {
           console.error("❌ [C] Error processing payment-tokens event:", error);
-          // optionally implement retry or DLQ logic here
         }
       },
     });
