@@ -1,5 +1,3 @@
-
-
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
@@ -13,7 +11,7 @@ import {
   handleUncaughtError,
 } from "./middleware/errorHandlerMiddleware.js";
 
-// ─── Kafka imports ───────────────────────────────────────────────────────────
+//  Kafka imports 
 import { connectProducer } from "./kafka/producer.js";
 // Note: simply importing waitForTokenResponse starts its single “reply” consumer
 // (groupId = "token-waiter-group") that subscribes to "adscript.tokens".
@@ -39,7 +37,7 @@ app.use((req, res, next) => {
 // Error‐handling middleware
 app.use(errorHandlerMiddleware);
 
-// ─── Wrap server startup in an async function so we can await Kafka + Mongo ───
+//  Wrap server startup in an async function so we can await Kafka + Mongo ───
 async function startAdScriptService() {
   // 1) Connect to MongoDB first (so your DB is available inside routes/controllers)
   try {

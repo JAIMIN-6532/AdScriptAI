@@ -71,6 +71,11 @@ const adScriptSchema = new mongoose.Schema(
       required: [true, "Tokens used is required"],
       min: [5, "Tokens used must be at least 5"],
     },
+    generatedImage:{
+      type: String,
+      // required: [true, "Generated image is required"],
+      trim: true,
+    },
     // If you want the ad to expire automatically after durationDays:
     expiryDate: {
       type: Date,

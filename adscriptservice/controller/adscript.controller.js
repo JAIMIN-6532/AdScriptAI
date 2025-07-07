@@ -152,6 +152,18 @@ export default class AdScriptController {
       // 2. Generate the ad script using OpenAI
       const generatedAdImage = await this.clipDropController.generateImage(prompt);
 
+      const savedImage = await this.adScriptRepository.saveAdImage({
+        userId,
+        adType,
+        platform,
+        productName,
+        productInfo,
+        targetAudience,
+        callToAction,
+        generatedAdImage,
+        tokensUsed : tokenResponse.tokensDeducted,
+      });
+
       // 2. Respond with the generated script and token cost
       return res.status(200).json({
         success: true,

@@ -47,6 +47,29 @@ export default class AdScriptRepository {
     }
   }
 
+  async saveAdImage(data) {
+    try {
+      // Create a new document (do not use `new` with `.create()`)
+      const newAdScript = new AdScriptModel({
+        userId: new mongoose.Types.ObjectId(data.userId),
+        adType: "image",
+        platform: data.platform,
+        productName: data.productName,
+        productInfo: data.productInfo,
+        targetAudience: data.targetAudience,
+        callToAction: data.callToAction || "Learn More",
+        generatedImage: data.generatedAdImage,
+        tokensUsed: data.tokensUsed,
+      });
+
+      // Save it
+      const savedDoc = await newAdScript.save();
+      return savedDoc;
+    } catch (error) {
+      throw new Error("Failed to save ad image script");
+    }
+  }
+
   /**
    * Fetches all ad scripts belonging to a single user.
    */

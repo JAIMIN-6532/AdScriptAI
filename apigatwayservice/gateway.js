@@ -19,6 +19,8 @@ const ADSCRIPT_SERVICE_URL =
   process.env.ADSCRIPT_SERVICE_URL || "http://localhost:3002";
 const TOKEN_SERVICE_URL =
   process.env.TOKEN_SERVICE_URL || "http://localhost:3003";
+const PAYMENT_SERVICE_URL =
+  process.env.PAYMENT_SERVICE_URL || "http://localhost:3004";
 
 // 2) GLOBAL MIDDLEWARE
 // Security headers
@@ -63,6 +65,7 @@ app.get("/healthz/ready", async (req, res) => {
       axios.head(`${USER_SERVICE_URL}/healthz`, { timeout: 200 }),
       axios.head(`${ADSCRIPT_SERVICE_URL}/healthz`, { timeout: 200 }),
       axios.head(`${TOKEN_SERVICE_URL}/healthz`, { timeout: 200 }),
+      axios.head(`${PAYMENT_SERVICE_URL}/healthz`, { timeout: 200 }),
     ]);
     res.sendStatus(200);
   } catch (err) {
@@ -121,13 +124,16 @@ app.use(
 // 5c) All "/api/v1/token/*" → tokenService
 app.use("/api/v1/token", makeProxy("/api/v1/token", TOKEN_SERVICE_URL));
 
-// 6) CATCH-ALL 404 FOR UNKNOWN ROUTES 
+// 5d) All "/api/v1/payment/*" → paymentService
+app.use("/api/v1/payment", makeProxy("/api/v1/payment", PAYMENT_SERVICE_URL));
+
+// 6) CATCH-ALL 404 FOR UNKNOWN ROUTES
 app.use((req, res) => {
   logger.warn(`Unknown route: ${req.method} ${req.originalUrl}`);
   res.status(404).json({ error: "Not found" });
 });
 
-//  7) GLOBAL ERROR HANDLER (in case anything else throws) 
+//  7) GLOBAL ERROR HANDLER (in case anything else throws)
 app.use((err, req, res, next) => {
   logger.error(
     `Unhandled error: ${req.method} ${req.originalUrl} → ${err.message} -> ${err.stack} `,
@@ -139,7 +145,7 @@ app.use((err, req, res, next) => {
   }
 });
 
-//  8) START LISTENING 
+//  8) START LISTENING
 app.listen(PORT, () => {
   logger.info(`Gateway listening on ${PORT}`);
 });
