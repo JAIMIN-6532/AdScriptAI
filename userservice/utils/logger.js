@@ -16,7 +16,7 @@ const consoleFormat = combine(
 );
 
 // JSON format for files
-const fileFormat = combine(()timestamp, json());
+const fileFormat = combine(timestamp(), json());
 
 const transports = [
   new winston.transports.Console({
